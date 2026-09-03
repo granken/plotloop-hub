@@ -1,0 +1,124 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://hub.plotloop.dev/schema/loop.schema.json",
+  "title": "PlotLoop Hub loop.yaml",
+  "description": "Metadata contract for a loop listed on PlotLoop Hub. See docs/SPEC.md v0.2.",
+  "type": "object",
+  "required": ["id", "title", "summary", "author", "created", "category", "kind", "visibility", "trigger", "runtime", "output"],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$",
+      "description": "kebab-case slug, unique across the Hub; must match the directory name"
+    },
+    "title": { "type": "string", "minLength": 4, "maxLength": 120 },
+    "summary": { "type": "string", "minLength": 10, "maxLength": 300 },
+    "author": { "type": "string", "minLength": 1 },
+    "created": { "type": "string", "format": "date" },
+
+    "category": {
+      "enum": ["ads-platform", "ai-compliance", "ai-market"],
+      "description": "v1 only accepts these three verticals"
+    },
+    "kind": {
+      "enum": ["public-feed", "pattern-only"],
+      "description": "public-feed requires runs/; pattern-only requires samples/"
+    },
+    "tags": { "type": "array", "items": { "type": "string" }, "maxItems": 8 },
+
+    "visibility": {
+      "type": "object",
+      "description": "Default-private. Publishing any field is an explicit choice.",
+      "required": ["definition", "outputs"],
+      "additionalProperties": false,
+      "properties": {
+        "definition": { "enum": ["public", "private"], "default": "private" },
+        "outputs": { "enum": ["public", "private"], "default": "private" },
+        "stats": { "enum": ["public", "private"], "default": "private" },
+        "author_identity": { "enum": ["public", "private"], "default": "private" }
+      }
+    },
+
+    "trigger": {
+      "type": "object",
+      "required": ["schedule", "timezone"],
+      "additionalProperties": false,
+      "properties": {
+        "schedule": {
+          "type": "string",
+          "description": "5-field cron. NOTE: GitHub Actions may delay or drop scheduled runs; never promise exact times."
+        },
+        "timezone": { "type": "string", "description": "IANA timezone, e.g. Asia/Shanghai" },
+        "catch_up": { "type": "boolean", "default": false }
+      }
+    },
+
+    "runtime": {
+      "type": "object",
+      "required": ["agnostic"],
+      "additionalProperties": false,
+      "properties": {
+        "agnostic": { "type": "boolean" },
+        "verified_on": {
+          "type": "array",
+          "items": { "enum": ["claude-code", "codex", "orca", "n8n", "github-actions", "other"] }
+        }
+      }
+    },
+
+    "dependencies": {
+      "type": "array",
+      "description": "Anti-decay: declare what can break. See SPEC.md §6.",
+      "items": {
+        "type": "object",
+        "required": ["name", "fragility"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string" },
+          "version_pinned": { "type": ["string", "null"] },
+          "fragility": { "enum": ["low", "medium", "high"] }
+        }
+      }
+    },
+
+    "output": {
+      "type": "object",
+      "required": ["format"],
+      "additionalProperties": false,
+      "properties": {
+        "format": { "enum": ["markdown", "json", "html"] },
+        "language": { "type": "string" },
+        "delivery": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+
+    "requires": {
+      "type": "array",
+      "description": "Parameters the receiving Agent must ask the user for. NEVER contains values.",
+      "items": {
+        "type": "object",
+        "required": ["key", "secret", "purpose"],
+        "additionalProperties": false,
+        "properties": {
+          "key": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]*$" },
+          "secret": { "type": "boolean" },
+          "purpose": { "type": "string", "minLength": 4 }
+        }
+      }
+    },
+
+    "health": {
+      "type": "object",
+      "description": "Written by CI only. Hand edits are flagged.",
+      "additionalProperties": false,
+      "properties": {
+        "last_run": { "type": ["string", "null"], "format": "date" },
+        "streak_days": { "type": "integer", "minimum": 0 },
+        "runs_total": { "type": "integer", "minimum": 0 },
+        "status": { "enum": ["healthy", "stale", "broken", "unproven"] },
+        "replay_success_rate": { "type": ["number", "null"], "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.DS_Store
+site/
+.venv/
+
+# 策略与调研文档保留在本地，正本在 plotloop/docs/plotloop-hub/
+docs/PLAN.md
+docs/RESEARCH_RESULT.md
+docs/JOURNAL.md

@@ -1,0 +1,63 @@
+id: feishu-daily-digest
+title: 群聊「今日值得关注」摘要
+summary: 每天扫全部工作群，产出分级的「需要你回应 / 需要你知道 / 可忽略」清单
+author: granken
+created: 2026-07-15
+
+category: ai-market
+kind: pattern-only
+
+tags: [信息过载, 群聊, 每日, 私域]
+
+# 🔴 私域工作流：只公开做法，产出永不离开你自己的环境
+visibility:
+  definition: public
+  outputs: private
+  stats: public
+  author_identity: public
+
+trigger:
+  schedule: "0 20 * * *"
+  timezone: Asia/Shanghai
+  catch_up: true
+
+runtime:
+  agnostic: true
+  verified_on: [claude-code]
+
+dependencies:
+  - name: 即时通讯读消息 API
+    version_pinned: "v1"
+    fragility: medium
+  - name: 分级判据（需按个人角色调参）
+    version_pinned: null
+    fragility: high        # 换个岗位判据就得重调，fork 后必须自己校准
+
+output:
+  format: markdown
+  language: zh
+  delivery: [local-file]
+
+requires:
+  - key: IM_APP_ID
+    secret: true
+    purpose: 读取群消息的应用凭证
+  - key: IM_APP_SECRET
+    secret: true
+    purpose: 同上
+  - key: WATCHED_CHAT_IDS
+    secret: false
+    purpose: 要扫的群列表；留空则扫全部可见群
+  - key: SELF_USER_ID
+    secret: false
+    purpose: 判断「@我」与「我已回复」
+  - key: DIGEST_TARGET
+    secret: false
+    purpose: 摘要投递目标；默认写本地文件
+
+health:
+  last_run: null
+  streak_days: 0
+  runs_total: 0
+  status: unproven
+  replay_success_rate: null

@@ -1,0 +1,135 @@
+{
+  "generated_at": "2026-09-03T23:13:36+00:00",
+  "spec_version": "0.2",
+  "count": 1,
+  "staging_count": 1,
+  "loops": [
+    {
+      "id": "ad-platform-ai-tracker",
+      "title": "全球主流广告平台 AI 产品与合规变更追踪",
+      "summary": "每日扫主流广告平台官方一手信源，过滤营销噪音，只留影响投放决策的产品与合规变更",
+      "category": "ads-platform",
+      "kind": "public-feed",
+      "tags": [
+        "广告投放",
+        "平台政策",
+        "合规",
+        "每日"
+      ],
+      "created": "2026-06-01",
+      "health": {
+        "last_run": null,
+        "streak_days": 0,
+        "runs_total": 0,
+        "status": "unproven",
+        "replay_success_rate": null
+      },
+      "url": "https://hub.plotloop.dev/l/ad-platform-ai-tracker",
+      "install": "把 https://hub.plotloop.dev/l/ad-platform-ai-tracker 读完，按里面的 LOOP.md 在我的环境里搭一遍，缺什么参数问我。",
+      "requires": [
+        {
+          "key": "FEISHU_APP_ID",
+          "secret": true,
+          "purpose": "调飞书 API 写文档、发群消息"
+        },
+        {
+          "key": "FEISHU_APP_SECRET",
+          "secret": true,
+          "purpose": "同上"
+        },
+        {
+          "key": "TARGET_DOC_TOKEN",
+          "secret": false,
+          "purpose": "持续追加的目标文档"
+        },
+        {
+          "key": "TARGET_CHAT_ID",
+          "secret": false,
+          "purpose": "摘要推送的目标群"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "各平台官方 changelog / policy 页面结构",
+          "version_pinned": null,
+          "fragility": "high"
+        },
+        {
+          "name": "feishu-open-api",
+          "version_pinned": "v1",
+          "fragility": "medium"
+        }
+      ],
+      "listed": false,
+      "latest_run": null,
+      "feed": null,
+      "outputs_note": "尚未产生可审计运行，暂不提供订阅"
+    },
+    {
+      "id": "feishu-daily-digest",
+      "title": "群聊「今日值得关注」摘要",
+      "summary": "每天扫全部工作群，产出分级的「需要你回应 / 需要你知道 / 可忽略」清单",
+      "category": "ai-market",
+      "kind": "pattern-only",
+      "tags": [
+        "信息过载",
+        "群聊",
+        "每日",
+        "私域"
+      ],
+      "created": "2026-07-15",
+      "health": {
+        "last_run": null,
+        "streak_days": 0,
+        "runs_total": 0,
+        "status": "unproven",
+        "replay_success_rate": null
+      },
+      "url": "https://hub.plotloop.dev/l/feishu-daily-digest",
+      "install": "把 https://hub.plotloop.dev/l/feishu-daily-digest 读完，按里面的 LOOP.md 在我的环境里搭一遍，缺什么参数问我。",
+      "requires": [
+        {
+          "key": "IM_APP_ID",
+          "secret": true,
+          "purpose": "读取群消息的应用凭证"
+        },
+        {
+          "key": "IM_APP_SECRET",
+          "secret": true,
+          "purpose": "同上"
+        },
+        {
+          "key": "WATCHED_CHAT_IDS",
+          "secret": false,
+          "purpose": "要扫的群列表；留空则扫全部可见群"
+        },
+        {
+          "key": "SELF_USER_ID",
+          "secret": false,
+          "purpose": "判断「@我」与「我已回复」"
+        },
+        {
+          "key": "DIGEST_TARGET",
+          "secret": false,
+          "purpose": "摘要投递目标；默认写本地文件"
+        }
+      ],
+      "dependencies": [
+        {
+          "name": "即时通讯读消息 API",
+          "version_pinned": "v1",
+          "fragility": "medium"
+        },
+        {
+          "name": "分级判据（需按个人角色调参）",
+          "version_pinned": null,
+          "fragility": "high"
+        }
+      ],
+      "listed": true,
+      "latest_run": null,
+      "feed": null,
+      "outputs_note": "产出私有；本 loop 只分享定义与脱敏样例"
+    }
+  ]
+}

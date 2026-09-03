@@ -1,0 +1,99 @@
+# Execute scheduled loops from the trusted default branch, then publish.
+#
+# Four GitHub constraints are designed in here (docs/SPEC.md §8, verified 2026-09-03):
+#
+#   1. `schedule` only ever runs on the default branch.
+#   2. Scheduled runs are delayed or dropped under load — we never promise a clock
+#      time. manifest.json records the real started_at, not the nominal one.
+#   3. Commits pushed with GITHUB_TOKEN do NOT trigger a separate Pages build.
+#      So this workflow deploys Pages itself, in the same run, after committing.
+#   4. runs/ is append-only and we skip the commit entirely when nothing is new
+#      (which also implements the product rule "无新意不发").
+
+name: run-loops
+
+on:
+  schedule:
+    # Nominal 08:00 Asia/Shanghai == 00:00 UTC. Actual firing time varies.
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+    inputs:
+      loop:
+        description: "Single loop slug to run (blank = all due loops)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# One run at a time. Never cancel mid-flight: a killed loop leaves a partial
+# manifest and corrupts the evidence trail.
+concurrency:
+  group: run-loops
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --disable-pip-version-check pyyaml
+
+      - name: Run due loops
+        env:
+          LOOP_FILTER: ${{ inputs.loop }}
+          # Per-loop credentials are injected here as repo secrets.
+          # They are never present in loop definitions — see docs/SPEC.md §0.3.
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+        run: python3 scripts/run_loops.py
+
+      - name: Refresh health from run history
+        run: python3 scripts/update_health.py
+
+      - name: Build feeds and site
+        run: python3 scripts/build_site.py
+
+      - name: Commit new runs (skipped when nothing changed)
+        id: commit
+        run: |
+          git config user.name  "plotloop-hub[bot]"
+          git config user.email "plotloop-hub[bot]@users.noreply.github.com"
+          git add -A loops site index.json
+          if git diff --cached --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "No new output — nothing to commit."
+          else
+            git commit -m "run: $(date -u +%Y-%m-%dT%H:%MZ)"
+            git push
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  # Constraint 3: this must happen in the same workflow, because the commit above
+  # was made with GITHUB_TOKEN and will not trigger a Pages build on its own.
+  deploy:
+    needs: run
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    permissions:
+      pages: write
+      id-token: write
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4

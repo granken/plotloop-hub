@@ -1,0 +1,59 @@
+id: ad-platform-ai-tracker
+title: 全球主流广告平台 AI 产品与合规变更追踪
+summary: 每日扫主流广告平台官方一手信源，过滤营销噪音，只留影响投放决策的产品与合规变更
+author: granken
+created: 2026-06-01
+
+category: ads-platform
+kind: public-feed
+tags: [广告投放, 平台政策, 合规, 每日]
+
+visibility:
+  definition: public
+  outputs: public          # 明确选择公开：信源均为官方一手公开信息
+  stats: public
+  author_identity: public
+
+trigger:
+  schedule: "0 8 * * *"    # 名义时点；GitHub Actions 不保证准点，见 docs/SPEC.md §8
+  timezone: Asia/Shanghai
+  catch_up: true           # 漏抓会造成 diff 断层，需按日期区间回补
+
+runtime:
+  agnostic: true
+  verified_on: [claude-code, codex]
+
+dependencies:
+  - name: 各平台官方 changelog / policy 页面结构
+    version_pinned: null
+    fragility: high        # 页面改版即失效，这是本 loop 最脆的一环
+  - name: feishu-open-api
+    version_pinned: "v1"
+    fragility: medium
+
+output:
+  format: markdown
+  language: zh
+  delivery: [feishu-doc, feishu-group]
+
+requires:
+  - key: FEISHU_APP_ID
+    secret: true
+    purpose: 调飞书 API 写文档、发群消息
+  - key: FEISHU_APP_SECRET
+    secret: true
+    purpose: 同上
+  - key: TARGET_DOC_TOKEN
+    secret: false
+    purpose: 持续追加的目标文档
+  - key: TARGET_CHAT_ID
+    secret: false
+    purpose: 摘要推送的目标群
+
+# 由 CI 写入，勿手改。unproven = 尚未在 Hub 内产生可审计运行记录。
+health:
+  last_run: null
+  streak_days: 0
+  runs_total: 0
+  status: unproven
+  replay_success_rate: null

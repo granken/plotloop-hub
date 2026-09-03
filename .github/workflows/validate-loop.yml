@@ -1,0 +1,57 @@
+# Contract validation for loop submissions.
+#
+# SECURITY RED LINE (docs/SPEC.md §7):
+#   This workflow uses `pull_request`, NOT `pull_request_target`.
+#   `pull_request_target` runs with the base repo's secrets and write token; combining
+#   it with a checkout of the fork's head lets a submitter exfiltrate those secrets.
+#   Submitted content is untrusted input — it is validated, never executed.
+#
+# Consequently this job has no secrets, read-only permissions, and never runs a loop.
+# Loops execute only from the trusted default branch, after merge (run-loops.yml).
+
+name: validate-loop
+
+on:
+  pull_request:
+    paths:
+      - "loops/**"
+      - "schema/**"
+      - "scripts/validate_loop.py"
+  push:
+    branches: [main]
+    paths:
+      - "loops/**"
+      - "schema/**"
+      - "scripts/validate_loop.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out (untrusted content — data only, never executed)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install --disable-pip-version-check pyyaml
+
+      - name: Validate loop contracts
+        run: python3 scripts/validate_loop.py
+
+      - name: Secret scan across the whole tree
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ""
