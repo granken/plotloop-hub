@@ -13,9 +13,15 @@
 name: run-loops
 
 on:
-  schedule:
-    # Nominal 08:00 Asia/Shanghai == 00:00 UTC. Actual firing time varies.
-    - cron: "0 0 * * *"
+  # Schedule is intentionally disabled while scripts/run_loops.py is a scaffold.
+  # It exits 1 by design, so a nightly trigger would report a red run every day —
+  # and a CI that is always red trains you to ignore it, which costs you the one
+  # notification that matters when something genuinely breaks.
+  #
+  # Re-enable once the execution model is settled (docs/SPEC.md §10):
+  # schedule:
+  #   # Nominal 08:00 Asia/Shanghai == 00:00 UTC. Actual firing time varies.
+  #   - cron: "0 0 * * *"
   workflow_dispatch:
     inputs:
       loop:
